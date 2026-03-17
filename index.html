@@ -120,31 +120,37 @@
         }
 
         /* =========================================
-           5. ALERTA FLOTANTE (TOAST)
+           5. ALERTAS FLOTANTES (TOP RIGHT)
            ========================================= */
-        #toast-alerta {
-            visibility: hidden;
-            min-width: 300px;
-            background-color: var(--error);
-            color: #fff;
-            text-align: center;
-            border-radius: 8px;
-            padding: 16px;
+        .floating-alerts-container {
             position: fixed;
-            z-index: 1000;
-            left: 50%;
-            bottom: 30px;
-            transform: translateX(-50%);
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-            opacity: 0;
-            transition: opacity 0.3s, bottom 0.3s;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none; /* Evita que bloqueen clics en elementos debajo */
         }
 
-        #toast-alerta.mostrar {
-            visibility: visible;
-            opacity: 1;
-            bottom: 50px;
+        .alerta-item {
+            background-color: #fff;
+            border-left: 4px solid var(--error);
+            color: var(--text-main);
+            padding: 12px 16px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 0.85rem;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateX(30px);
+            animation: slideIn 0.3s forwards ease-out;
+            max-width: 300px;
+            line-height: 1.4;
+        }
+
+        @keyframes slideIn {
+            to { opacity: 1; transform: translateX(0); }
         }
 
         /* =========================================
@@ -162,12 +168,20 @@
             .total-tracker { min-width: 80px; }
             .btn-submit { width: 100%; padding: 1rem; }
             
-            /* Ajuste del toast en celulares */
-            #toast-alerta { width: 90%; min-width: auto; font-size: 0.9rem; }
+            /* Ajuste de alertas flotantes para móviles */
+            .floating-alerts-container {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                align-items: center;
+            }
+            .alerta-item { max-width: 100%; width: 100%; }
         }
     </style>
 </head>
 <body>
+
+<div id="alertas-flotantes" class="floating-alerts-container"></div>
 
 <div class="container">
     <div id="main-form-container">
@@ -190,8 +204,6 @@
         <h2>¡Evaluación Enviada Exitosamente!</h2>
         <p>Sus respuestas han sido registradas correctamente en la base de datos.<br>Gracias por su participación. Ya puede cerrar esta ventana.</p>
     </div>
-
-    <div id="toast-alerta">⚠️ Recuerda dividir los 100 puntos entre todas las opciones.</div>
 </div>
 
 <script>
@@ -297,19 +309,7 @@
         container.innerHTML += cardHTML;
     });
 
-    // 2. Funciones de Validación y Alerta
-    function mostrarAlertaExceso() {
-        const toast = document.getElementById('toast-alerta');
-        // Si ya se está mostrando, no hacemos nada para evitar parpadeos
-        if (!toast.classList.contains('mostrar')) {
-            toast.classList.add('mostrar');
-            // Ocultar automáticamente después de 3.5 segundos
-            setTimeout(() => {
-                toast.classList.remove('mostrar');
-            }, 3500);
-        }
-    }
-
+    // 2. Validación en Tiempo Real y Alertas Flotantes Dinámicas
     document.addEventListener('input', function(e) {
         if (e.target.classList.contains('val-input')) {
             if (e.target.value < 0) e.target.value = 0;
@@ -319,16 +319,28 @@
 
     function actualizarValidacionDOM() {
         let sumasValidas = true;
+        let alertasHTML = '';
 
         for (let i = 0; i < cuestionario.length; i++) {
             let sumActual = 0;
             let sumPref = 0;
+            let llenosActual = 0;
+            let llenosPref = 0;
 
-            document.querySelectorAll(`input[data-dim="${i}"][data-col="actual"]`).forEach(el => sumActual += Number(el.value) || 0);
-            document.querySelectorAll(`input[data-dim="${i}"][data-col="pref"]`).forEach(el => sumPref += Number(el.value) || 0);
+            // Calcular suma y contar cuántas casillas ha llenado el usuario
+            document.querySelectorAll(`input[data-dim="${i}"][data-col="actual"]`).forEach(el => {
+                sumActual += Number(el.value) || 0;
+                if (el.value !== "") llenosActual++;
+            });
+
+            document.querySelectorAll(`input[data-dim="${i}"][data-col="pref"]`).forEach(el => {
+                sumPref += Number(el.value) || 0;
+                if (el.value !== "") llenosPref++;
+            });
 
             const totActualEl = document.getElementById(`tot-actual-${i}`);
             const totPrefEl = document.getElementById(`tot-pref-${i}`);
+            const card = document.getElementById(`card-${i}`);
             
             totActualEl.textContent = sumActual;
             totPrefEl.textContent = sumPref;
@@ -336,21 +348,38 @@
             totActualEl.className = sumActual === 100 ? 'total-value success' : 'total-value error';
             totPrefEl.className = sumPref === 100 ? 'total-value success' : 'total-value error';
 
-            const card = document.getElementById(`card-${i}`);
-            
-            // Lógica de alerta si se pasa de 100
-            if (sumActual > 100 || sumPref > 100) {
-                card.style.borderColor = 'var(--error)';
-                sumasValidas = false;
-                mostrarAlertaExceso(); // Dispara la alerta flotante
-            } else if (sumActual === 100 && sumPref === 100) {
+            // Lógica visual de los bordes de la tarjeta
+            if (sumActual === 100 && sumPref === 100) {
                 card.style.borderColor = 'var(--success)';
             } else {
-                card.style.borderColor = 'var(--border)';
+                card.style.borderColor = (sumActual > 100 || sumPref > 100) ? 'var(--error)' : 'var(--border)';
                 sumasValidas = false;
+            }
+
+            // NUEVA LÓGICA DE ALERTAS FLOTANTES (UX Mejorado)
+            // Lanza error solo si se pasa de 100 (error inmediato) 
+            // O si ya llenó las 4 opciones y el cálculo le quedó mal
+            let errorActual = (sumActual > 100) || (llenosActual === 4 && sumActual !== 100);
+            let errorPref = (sumPref > 100) || (llenosPref === 4 && sumPref !== 100);
+
+            if (errorActual || errorPref) {
+                let detalle = [];
+                if (errorActual) detalle.push("ACTUAL");
+                if (errorPref) detalle.push("DESEADA");
+                
+                alertasHTML += `
+                    <div class="alerta-item">
+                        ⚠️ <b>${cuestionario[i].titulo}</b><br>
+                        Revisar columna: ${detalle.join(" y ")}
+                    </div>
+                `;
             }
         }
 
+        // Renderizar las alertas en el contenedor superior derecho
+        document.getElementById('alertas-flotantes').innerHTML = alertasHTML;
+
+        // Control estricto del botón de envío final
         const btnSubmit = document.getElementById('btn-submit');
         const globalError = document.getElementById('global-error');
 
@@ -361,7 +390,7 @@
         } else {
             btnSubmit.disabled = true;
             globalError.style.color = 'var(--error)';
-            globalError.textContent = "Revise los totales. Cada columna de cada sección debe sumar exactamente 100.";
+            globalError.textContent = "Complete todas las secciones. Cada columna debe sumar 100.";
         }
     }
 
@@ -398,6 +427,7 @@
             const result = await response.json();
 
             if (result.success) {
+                document.getElementById('alertas-flotantes').style.display = 'none'; // Ocultar alertas al finalizar
                 document.getElementById('main-form-container').style.display = 'none';
                 document.getElementById('success-screen').style.display = 'block';
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -411,6 +441,7 @@
         }
     }
 
+    // Inicializar estado
     actualizarValidacionDOM();
 </script>
 
