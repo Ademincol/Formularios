@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluación de Cultura Organizacional (OCAI)</title>
+    <style>
+        :root {
+            --primary: #2b4c7e;
+            --primary-hover: #1e3a63;
+            --success: #10b981;
+            --error: #ef4444;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --bg-body: #f7fafc;
+            --bg-card: #ffffff;
+            --border: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 2rem 1rem;
+            line-height: 1.5;
+        }
+
+        .container { max-width: 950px; margin: 0 auto; }
+
+        .header-section {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            border-top: 4px solid var(--primary);
+            text-align: center;
+        }
+
+        h1 { font-size: 1.5rem; color: var(--text-main); margin-bottom: 1rem; }
+        .instructions-text { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* TARJETAS DE DIMENSIÓN */
+        .dimension-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            transition: border-color 0.3s ease;
+        }
+
+        .dimension-header {
+            background-color: #f8fafc;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+
+        .question-row {
+            display: grid;
+            grid-template-columns: 50px 1fr 100px 100px;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+        }
+
+        .question-row:last-child { border-bottom: none; }
+
+        .letter-badge {
+            background-color: #e2e8f0;
+            color: #4a5568;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .question-text { font-size: 0.95rem; color: #4a5568; }
+
+        .input-group { display: flex; flex-direction: column; align-items: center; }
+        .input-label { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        input[type="number"] {
+            width: 100%; padding: 0.6rem; border: 1px solid #cbd5e0; border-radius: 4px;
+            text-align: center; font-size: 1rem; color: #4a5568; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="number"]:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(43, 76, 126, 0.2); }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* PANELES DE TOTALES */
+        .totals-panel {
+            background-color: #f8fafc;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 2.5rem;
+        }
+
+        .total-tracker { display: flex; flex-direction: column; align-items: center; min-width: 90px; }
+        .total-value { font-size: 1.2rem; font-weight: bold; margin-top: 0.2rem; }
+        .total-value.success { color: var(--success); }
+        .total-value.error { color: var(--error); }
+
+        /* BOTÓN Y ERRORES */
+        .submit-container { margin-top: 2rem; text-align: center; margin-bottom: 4rem; }
+        
+        .btn-submit {
+            background-color: var(--primary); color: white; border: none; padding: 1rem 3rem;
+            font-size: 1.1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.3s;
+        }
+        
+        .btn-submit:hover:not(:disabled) { background-color: var(--primary-hover); transform: translateY(-2px); }
+        .btn-submit:disabled { background-color: var(--text-muted); cursor: not-allowed; opacity: 0.7; }
+        .global-error-msg { color: var(--error); font-weight: bold; margin-top: 1rem; min-height: 24px; }
+
+        /* PANTALLA DE ÉXITO */
+        #success-screen {
+            display: none; background: var(--bg-card); padding: 4rem 2rem; border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; margin-top: 2rem;
+        }
+
+        .success-icon {
+            background-color: #d1fae5; color: var(--success); width: 80px; height: 80px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; margin: 0 auto 1.5rem auto;
+        }
+
+        #success-screen h2 { color: var(--text-main); margin-bottom: 1rem; }
+        #success-screen p { color: var(--text-muted); font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="main-form-container">
+        <div class="header-section">
+            <h1>Evaluación de Cultura Organizacional (OCAI)</h1>
+            <p class="instructions-text">Distribuya exactamente 100 puntos en la columna ACTUAL y 100 puntos en la DESEADA para cada sección.</p>
+            <p class="instructions-text" style="font-size: 0.85rem; margin-top: 10px;">Esta evaluación es completamente anónima.</p>
+        </div>
+
+        <div id="cuestionario-container"></div>
+
+        <div class="submit-container">
+            <button id="btn-submit" class="btn-submit" disabled onclick="enviarDatos()">Enviar Evaluación</button>
+            <div id="global-error" class="global-error-msg">Asegúrese de que todas las secciones sumen exactamente 100.</div>
+        </div>
+    </div>
+
+    <div id="success-screen">
+        <div class="success-icon">✓</div>
+        <h2>¡Evaluación Enviada Exitosamente!</h2>
+        <p>Sus respuestas han sido registradas correctamente en la base de datos.<br>Gracias por su participación. Ya puede cerrar esta ventana.</p>
+    </div>
+</div>
+
+<script>
+    const cuestionario = [
+        {
+            titulo: "1. Características Dominantes",
+            opciones: [
+                "La organización es un lugar muy personal. Es como una familia. Las personas disfrutan de la compañía de otros.",
+                "La organización es un lugar muy dinámico con características emprendedoras. A las personas les gusta tomar riesgos.",
+                "La organización está muy orientada a los resultados. La mayor preocupación es hacer el trabajo bien hecho. Las personas son competitivas entre sí.",
+                "La organización es muy estructurada y controlada. Generalmente los procedimientos dicen a las personas qué hacer."
+            ]
+        },
+        {
+            titulo: "2. Líderes de la Organización",
+            opciones: [
+                "El liderazgo de la organización es usado como un instrumento de facilitar, guiar y enseñar a sus miembros.",
+                "El liderazgo de la organización es usado para apoyar la innovación, el espíritu emprendedor y la toma de riesgos.",
+                "El liderazgo de la organización es usado para asegurar el logro de los resultados.",
+                "El liderazgo de la organización es usado para coordinar, organizar o mejorar la eficiencia."
+            ]
+        },
+        {
+            titulo: "3. Estilo Gerencial",
+            opciones: [
+                "El estilo de manejo del recurso humano se caracteriza por el trabajo en equipo, el consenso y la participación.",
+                "El estilo de manejo del recurso humano se caracteriza por el individualismo y libertad.",
+                "El estilo de manejo del recurso humano se caracteriza por la alta competencia y exigencias.",
+                "El estilo de manejo del recurso humano se caracteriza por dar seguridad de los puestos de trabajo y la estabilidad."
+            ]
+        },
+        {
+            titulo: "4. Unión de la Organización",
+            opciones: [
+                "Lo que mantiene unida a la organización es la lealtad y la confianza mutua.",
+                "Lo que mantiene unida a la organización son los deseos de innovación y desarrollo. Énfasis en estar al límite.",
+                "Lo que mantiene unida a la organización es el cumplimiento de metas. El ganar y tener éxito son temas comunes.",
+                "Lo que mantiene unida a la organización son las políticas y las reglas. Mantener la organización en marcha es lo importante."
+            ]
+        },
+        {
+            titulo: "5. Énfasis Estratégico",
+            opciones: [
+                "La organización enfatiza el desarrollo humano. La confianza es alta, junto con la apertura y la participación.",
+                "La organización enfatiza la adquisición de nuevos recursos y desafíos. Se valora probar nuevas cosas.",
+                "La organización enfatiza el hacer acciones competitivas y ganar espacios en los mercados.",
+                "La organización enfatiza la permanencia y la estabilidad. La eficiencia y el control son importantes."
+            ]
+        },
+        {
+            titulo: "6. Criterio de Éxito",
+            opciones: [
+                "El éxito se define sobre la base del desarrollo de los recursos humanos, trabajo en equipo y reconocimiento.",
+                "El éxito se define sobre la base de contar con un producto único. Se debe ser líder en innovación.",
+                "El éxito se define sobre la participación de mercado y el desplazamiento de la competencia.",
+                "El éxito se define sobre la base de la eficiencia en el cumplimiento de sus tareas."
+            ]
+        }
+    ];
+
+    const letras = ["A", "B", "C", "D"];
+    const container = document.getElementById('cuestionario-container');
+
+    // 1. Renderizar tarjetas
+    cuestionario.forEach((dim, dimIndex) => {
+        let cardHTML = `
+            <div class="dimension-card" id="card-${dimIndex}">
+                <div class="dimension-header">${dim.titulo}</div>
+                <div class="questions-body">
+        `;
+        
+        dim.opciones.forEach((opcion, opIndex) => {
+            cardHTML += `
+                <div class="question-row">
+                    <div class="letter-badge">${letras[opIndex]}</div>
+                    <div class="question-text">${opcion}</div>
+                    <div class="input-group">
+                        <div class="input-label">ACTUAL</div>
+                        <input type="number" class="val-input" data-dim="${dimIndex}" data-op="${opIndex}" data-col="actual" min="0" max="100" placeholder="0">
+                    </div>
+                    <div class="input-group">
+                        <div class="input-label">DESEADA</div>
+                        <input type="number" class="val-input" data-dim="${dimIndex}" data-op="${opIndex}" data-col="pref" min="0" max="100" placeholder="0">
+                    </div>
+                </div>
+            `;
+        });
+
+        cardHTML += `
+                </div>
+                <div class="totals-panel">
+                    <div class="total-tracker">
+                        <span class="input-label">TOTAL ACTUAL</span>
+                        <div class="total-value" id="tot-actual-${dimIndex}">0</div>
+                    </div>
+                    <div class="total-tracker">
+                        <span class="input-label">TOTAL DESEADA</span>
+                        <div class="total-value" id="tot-pref-${dimIndex}">0</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        container.innerHTML += cardHTML;
+    });
+
+    // 2. Validación en Tiempo Real
+    document.addEventListener('input', function(e) {
+        if (e.target.classList.contains('val-input')) {
+            if (e.target.value < 0) e.target.value = 0;
+            actualizarValidacionDOM();
+        }
+    });
+
+    function actualizarValidacionDOM() {
+        let sumasValidas = true;
+
+        for (let i = 0; i < cuestionario.length; i++) {
+            let sumActual = 0;
+            let sumPref = 0;
+
+            document.querySelectorAll(`input[data-dim="${i}"][data-col="actual"]`).forEach(el => sumActual += Number(el.value) || 0);
+            document.querySelectorAll(`input[data-dim="${i}"][data-col="pref"]`).forEach(el => sumPref += Number(el.value) || 0);
+
+            const totActualEl = document.getElementById(`tot-actual-${i}`);
+            const totPrefEl = document.getElementById(`tot-pref-${i}`);
+            
+            totActualEl.textContent = sumActual;
+            totPrefEl.textContent = sumPref;
+
+            totActualEl.className = sumActual === 100 ? 'total-value success' : 'total-value error';
+            totPrefEl.className = sumPref === 100 ? 'total-value success' : 'total-value error';
+
+            const card = document.getElementById(`card-${i}`);
+            if (sumActual === 100 && sumPref === 100) {
+                card.style.borderColor = 'var(--success)';
+            } else {
+                card.style.borderColor = (sumActual > 100 || sumPref > 100) ? 'var(--error)' : 'var(--border)';
+                sumasValidas = false;
+            }
+        }
+
+        const btnSubmit = document.getElementById('btn-submit');
+        const globalError = document.getElementById('global-error');
+
+        if (sumasValidas) {
+            btnSubmit.disabled = false;
+            globalError.style.color = 'var(--success)';
+            globalError.textContent = "Todo correcto. Listo para enviar.";
+        } else {
+            btnSubmit.disabled = true;
+            globalError.style.color = 'var(--error)';
+            globalError.textContent = "Revise los totales. Cada columna de cada sección debe sumar exactamente 100.";
+        }
+    }
+
+    // 3. Envío de Datos
+    async function enviarDatos() {
+        const btnSubmit = document.getElementById('btn-submit');
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = "Guardando datos...";
+
+        let respuestas = [];
+        
+        cuestionario.forEach((dim, dimIndex) => {
+            dim.opciones.forEach((opcion, opIndex) => {
+                let valActual = Number(document.querySelector(`input[data-dim="${dimIndex}"][data-op="${opIndex}"][data-col="actual"]`).value) || 0;
+                let valPref = Number(document.querySelector(`input[data-dim="${dimIndex}"][data-op="${opIndex}"][data-col="pref"]`).value) || 0;
+
+                respuestas.push({ contexto: "Actual", categoria: dim.titulo, letra: letras[opIndex], enunciado: opcion, puntaje: valActual });
+                respuestas.push({ contexto: "Deseada", categoria: dim.titulo, letra: letras[opIndex], enunciado: opcion, puntaje: valPref });
+            });
+        });
+
+        // Payload sin demografía
+        const payload = { respuestas: respuestas };
+
+        try {
+            // Inserta aquí tu URL de Google Apps Script
+            const scriptURL = "https://script.google.com/macros/s/AKfycbxVcN0uAW0IgzZMDUOuhX8jb2iUI3M2nawLcc_j4jtpAy923BVCH2pknLyRu10Nox_J/exec"; 
+            
+            const response = await fetch(scriptURL, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                document.getElementById('main-form-container').style.display = 'none';
+                document.getElementById('success-screen').style.display = 'block';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                throw new Error(result.error);
+            }
+        } catch (error) {
+            alert("Error de conexión: " + error.message);
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = "Intentar Nuevamente";
+        }
+    }
+
+    actualizarValidacionDOM();
+</script>
+
+</body>
+</html>
